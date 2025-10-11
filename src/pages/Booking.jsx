@@ -1,44 +1,156 @@
-import React from "react";
-import { FiSearch, FiFilter, FiCheckCircle, FiXCircle } from "react-icons/fi";
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useEffect, useState, useRef } from "react";
+import { FiSearch, FiFilter, FiCheckCircle, FiXCircle, FiChevronDown } from "react-icons/fi";
 import { BsThreeDotsVertical } from "react-icons/bs";
-
-const bookings = [
-  { id: "#SN192MB5H9G", name: "Aarav", contact: "6789432156", amount: "₹2000", status: "Paid" },
-  { id: "#SN192MB5H9G", name: "Parmesh", contact: "1234567890", amount: "₹2500", status: "Due" },
-  { id: "#SN192MB5H9G", name: "Mohan", contact: "9876543210", amount: "₹2000", status: "Paid" },
-  { id: "#SN192MB5H9G", name: "Cecil", contact: "5551234567", amount: "₹3000", status: "Paid" },
-];
+import { useBookingStore } from "../stores/useBookingStore";
 
 function Booking() {
+  const { getAllBookings, bookings } = useBookingStore();
+  const [roomId, setRoomId] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    getAllBookings();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleFilter = () => {
+    getAllBookings(roomId.trim(), paymentStatus);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") handleFilter();
+  };
+
+  const handleStatusSelect = (status) => {
+    setPaymentStatus(status);
+    setIsDropdownOpen(false);
+  };
+
+  const handleClearFilters = () => {
+    setRoomId("");
+    setPaymentStatus("");
+    getAllBookings();
+  };
+
+  const getStatusLabel = () => {
+    if (!paymentStatus) return "All Status";
+    return paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1);
+  };
+
   return (
     <div className="p-4 sm:p-6 bg-white rounded-2xl shadow-lg w-full">
-      
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between gap-3 mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-red-600">Booking</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-red-600">Bookings</h1>
 
         {/* Filter & Search */}
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <button className="flex items-center gap-2 border px-3 py-2 rounded-md text-sm sm:text-base">
-            <FiFilter /> Filter
-          </button>
+          {/* Status Filter Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center justify-between gap-2 border px-3 py-2 rounded-md text-sm sm:text-base hover:bg-gray-50 w-full sm:w-40"
+            >
+              <div className="flex items-center gap-2">
+                <FiFilter />
+                <span>{getStatusLabel()}</span>
+              </div>
+              <FiChevronDown className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isDropdownOpen && (
+              <div className="absolute top-full mt-1 w-full sm:w-40 bg-white border rounded-md shadow-lg z-10">
+                <button
+                  onClick={() => handleStatusSelect("")}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                    paymentStatus === "" ? "bg-gray-100 font-medium" : ""
+                  }`}
+                >
+                  All Status
+                </button>
+                <button
+                  onClick={() => handleStatusSelect("pending")}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                    paymentStatus === "pending" ? "bg-gray-100 font-medium" : ""
+                  }`}
+                >
+                  Pending
+                </button>
+                <button
+                  onClick={() => handleStatusSelect("paid")}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                    paymentStatus === "paid" ? "bg-gray-100 font-medium" : ""
+                  }`}
+                >
+                  Paid
+                </button>
+                <button
+                  onClick={() => handleStatusSelect("cancelled")}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                    paymentStatus === "cancelled" ? "bg-gray-100 font-medium" : ""
+                  }`}
+                >
+                  Cancelled
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Search Input */}
           <div className="relative w-full sm:w-60">
             <input
               type="text"
-              placeholder="Search by room number/ID"
+              placeholder="Search by Room ID"
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+              onKeyDown={handleKeyDown}
               className="border rounded-md pl-8 pr-3 py-2 w-full text-sm"
             />
-            <FiSearch size={16} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500" />
+            <FiSearch
+              size={16}
+              className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500"
+            />
           </div>
+
+          {/* Apply Filter Button */}
+          <button
+            onClick={handleFilter}
+            className="px-4 py-2 bg-red-600 text-white rounded-md text-sm sm:text-base hover:bg-red-700"
+          >
+            Apply
+          </button>
+
+          {/* Clear Filters Button */}
+          {(roomId || paymentStatus) && (
+            <button
+              onClick={handleClearFilters}
+              className="px-4 py-2 border rounded-md text-sm sm:text-base hover:bg-gray-50"
+            >
+              Clear
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Table for larger screens */}
+      {/* Table */}
       <div className="hidden sm:block overflow-x-auto">
         <table className="min-w-full text-sm sm:text-base">
           <thead className="bg-gray-100">
             <tr>
-              <th className="py-3 px-4">Booking Id</th>
+              <th className="py-3 px-4">Booking ID</th>
               <th className="py-3 px-4">Name</th>
               <th className="py-3 px-4">Contact No.</th>
               <th className="py-3 px-4">Check In</th>
@@ -49,76 +161,51 @@ function Booking() {
             </tr>
           </thead>
           <tbody>
-            {bookings.map((b, i) => (
-              <tr key={i} className="border-b">
-                <td className="py-2 px-4">{b.id}</td>
-                <td className="py-2 px-4">{b.name}</td>
-                <td className="py-2 px-4">{b.contact}</td>
-                <td className="py-2 px-4">24 July 25</td>
-                <td className="py-2 px-4">28 July 25</td>
-                <td className="py-2 px-4 font-semibold">{b.amount}</td>
-                <td className="py-2 px-4">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium ${
-                      b.status === "Paid" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
-                    }`}
-                  >
-                    {b.status}
-                  </span>
-                </td>
-                <td className="py-2 px-4 flex gap-2">
-                  <FiCheckCircle className="text-green-600" />
-                  <FiXCircle className="text-red-600" />
-                  <BsThreeDotsVertical className="text-gray-500" />
+            {bookings.length > 0 ? (
+              bookings.map((b) => (
+                <tr key={b._id} className="border-b text-sm">
+                  <td className="py-2 px-4">{b?._id}</td>
+                  <td className="py-2 px-4">
+                    {b?.guestDetails?.firstName} {b?.guestDetails?.lastName}
+                  </td>
+                  <td className="py-2 px-4">{b?.guestDetails?.phone}</td>
+                  <td className="py-2 px-4">{b?.dates?.checkIn}</td>
+                  <td className="py-2 px-4">{b?.dates?.checkOut}</td>
+                  <td className="py-2 px-4 font-semibold">
+                    ₹{b?.pricing?.totalAmount}
+                  </td>
+                  <td className="py-2 px-4">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium ${
+                        b.paymentStatus === "pending"
+                          ? "bg-red-100 text-red-600"
+                          : b.paymentStatus === "paid"
+                          ? "bg-green-100 text-green-600"
+                          : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {b.paymentStatus}
+                    </span>
+                  </td>
+                  <td className="py-2 px-4 flex gap-2">
+                    <FiCheckCircle className="text-green-600 cursor-pointer hover:scale-110" />
+                    <FiXCircle className="text-red-600 cursor-pointer hover:scale-110" />
+                    <BsThreeDotsVertical className="text-gray-500 cursor-pointer hover:scale-110" />
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td
+                  colSpan="8"
+                  className="text-center py-4 text-gray-500 italic"
+                >
+                  No bookings found
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
-      </div>
-
-      {/* Card View for small screens */}
-      <div className="sm:hidden flex flex-col gap-4">
-        {bookings.map((b, i) => (
-          <div key={i} className="bg-gray-50 p-4 rounded-lg shadow flex flex-col gap-2">
-            <div className="flex justify-between items-center">
-              <span className="font-bold">{b.name}</span>
-              <span
-                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  b.status === "Paid" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
-                }`}
-              >
-                {b.status}
-              </span>
-            </div>
-            <div className="text-xs text-gray-500">Booking ID: {b.id}</div>
-            <div className="text-xs text-gray-500">Contact: {b.contact}</div>
-            <div className="text-xs text-gray-500">Check In: 24 July 25</div>
-            <div className="text-xs text-gray-500">Check Out: 28 July 25</div>
-            <div className="font-semibold">Amount: {b.amount}</div>
-            <div className="flex gap-2 pt-2">
-              <FiCheckCircle className="text-green-600" />
-              <FiXCircle className="text-red-600" />
-              <BsThreeDotsVertical className="text-gray-500" />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Pagination */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-2">
-        <button className="px-3 py-1 rounded-md border bg-gray-100 text-gray-400">Previous</button>
-        <div className="flex gap-2 flex-wrap">
-          {[1, 2, 3, 4].map((n) => (
-            <button
-              key={n}
-              className={`px-3 py-1 rounded-md ${n === 1 ? "bg-gray-300 text-white" : "bg-white border"}`}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
-        <button className="px-3 py-1 rounded-md border bg-gray-100">Next</button>
       </div>
     </div>
   );

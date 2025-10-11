@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { FaUserCircle } from "react-icons/fa";
 import { FiSearch, FiX } from "react-icons/fi";
+import { useUserStore } from "../stores/useUserStore";
 
 function Header() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const {user} = useUserStore();
 
   return (
     <>
@@ -50,7 +52,7 @@ function Header() {
             <div className="flex items-center gap-1">
               <FaUserCircle size={28} className="text-red-700" />
               <p className="hidden sm:block font-medium text-red-500 truncate max-w-[100px]">
-                Tushar
+                {user.name}
               </p>
             </div>
           </div>

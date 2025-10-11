@@ -1,7 +1,7 @@
 import React from "react";
 
 const TodayOccupancy = ({ 
-  percentage = 60, 
+  percentage,
   strokeWidth = 10, 
   color = "#ef4444", 
   backgroundColor = "#fecaca",
@@ -14,7 +14,7 @@ const TodayOccupancy = ({
   const radius = (size - strokeWidth) / 2;
   const circumference = Math.PI * radius; // Half circle
   const strokeDasharray = circumference;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+const strokeDashoffset = circumference * (1 - percentage / 100);
 
   return (
     <div className="relative inline-flex items-center justify-center w-32 sm:w-40 md:w-48 lg:w-56">
@@ -51,7 +51,7 @@ const TodayOccupancy = ({
           className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center font-bold text-lg sm:text-xl md:text-2xl lg:text-3xl"
           style={{ color: textColor }}
         >
-          {percentage}%
+  {Math.round(percentage)}%
         </div>
       )}
     </div>

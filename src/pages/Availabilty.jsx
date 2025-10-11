@@ -1,85 +1,92 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { FaCalendar, FaFilter } from "react-icons/fa6";
+import { useRoomStore } from "../stores/useRoomStore";
+import { useEffect, useState, useRef } from "react";
 
 function Availabilty() {
-  const roomTypes = [
-    { id: 1, title: "Classic Rooms", deals: 2, available: "2/35", price: "₹1,068" },
-    { id: 2, title: "AC Base Rooms", deals: 2, available: "2/35", price: "₹568" },
-    { id: 3, title: "Non-AC Rooms", deals: 2, available: "2/35", price: "₹1,568" },
-    { id: 4, title: "Sharing Rooms", deals: 2, available: "2/35", price: "₹2,568" },
-  ];
+  const { getRoomTypes, roomTypes } = useRoomStore();
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0] // Default: today's date
+  );
+  const dateInputRef = useRef(null);
 
-  const roomTable = [
-    {
-      id: 1,
-      type: "Single",
-      offer: "Family Package",
-      policy: "Strict",
-      dealPrice: "₹700",
-      rate: "₹800",
-      availability: "5 rooms",
-      status: "low",
-    },
-    {
-      id: 2,
-      type: "Double",
-      offer: "Holiday Special",
-      policy: "Strict",
-      dealPrice: "₹1,000",
-      rate: "₹1,200",
-      availability: "Full",
-      status: "full",
-    },
-    {
-      id: 3,
-      type: "Classic",
-      offer: "Family Bundle",
-      policy: "Flexible",
-      dealPrice: "₹1,600",
-      rate: "₹2,000",
-      availability: "12 rooms",
-      status: "ok",
-    },
-    {
-      id: 4,
-      type: "Basic",
-      offer: "Mega Sale",
-      policy: "Non refundable",
-      dealPrice: "₹3,500",
-      rate: "₹4,000",
-      availability: "10 rooms",
-      status: "ok",
-    },
-  ];
+  useEffect(() => {
+    getRoomTypes();
+  }, []);
+
+  // Open native date picker when calendar button clicked
+  const handleCalendarClick = () => {
+    if (dateInputRef.current) {
+      dateInputRef.current.showPicker?.(); // modern browsers
+      dateInputRef.current.focus(); // fallback
+    }
+  };
+
+  // Format DD-MM-YYYY for button display
+  const formattedDate = new Date(selectedDate)
+    .toLocaleDateString("en-GB")
+    .replace(/\//g, "-");
 
   return (
     <div className="w-full p-4 sm:p-6 md:p-8">
-      
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-        <h2 className="text-2xl sm:text-3xl text-red-500 font-semibold">Rooms</h2>
-        <button className="bg-red-500 text-white px-4 py-2 rounded-xl flex gap-2 items-center text-sm sm:text-base">
-          <FaCalendar />
-          20-07-2024
-        </button>
+        <h2 className="text-2xl sm:text-3xl text-red-500 font-semibold">
+          Rooms
+        </h2>
+
+        {/* Calendar Button */}
+        <div className="relative">
+          <button
+            onClick={handleCalendarClick}
+            className="bg-red-500 text-white px-4 py-2 rounded-xl flex gap-2 items-center text-sm sm:text-base"
+          >
+            <FaCalendar />
+            {formattedDate}
+          </button>
+
+          {/* Hidden date input */}
+          <input
+            type="date"
+            ref={dateInputRef}
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="absolute inset-0 opacity-0 cursor-pointer"
+            style={{ width: "100%", height: "100%" }}
+          />
+        </div>
       </div>
 
       {/* Room Types Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {roomTypes.map((room) => (
-          <div key={room.id} className="rounded-lg p-4 shadow-lg bg-white flex flex-col">
-            {room.deals > 0 && (
+        {roomTypes?.map((group) =>
+          group.rooms?.map((room) => (
+            <div
+              key={room._id}
+              className="rounded-lg p-4 shadow-lg bg-white flex flex-col"
+            >
               <div className="text-green-600 font-bold bg-emerald-300/20 w-fit px-3 rounded-2xl text-sm mb-2">
-                {room.deals} Deals
+                2 Deals
               </div>
-            )}
-            <div className="font-semibold text-sm sm:text-base">{room.title}</div>
-            <p className="text-xs sm:text-sm text-gray-500">{room.available} available</p>
-            <p className="text-red-600 font-bold text-lg sm:text-xl">
-              {room.price}
-              <span className="text-gray-500 text-xs sm:text-sm">/day</span>
-            </p>
-          </div>
-        ))}
+
+              {/* Room type */}
+              <div className="font-semibold text-sm sm:text-base">
+                {group.type}
+              </div>
+
+              {/* Available rooms */}
+              <p className="text-xs sm:text-sm text-gray-500">
+                2/{room.totalRooms} available
+              </p>
+
+              {/* Price */}
+              <p className="text-red-600 font-bold text-lg sm:text-xl">
+                {room.basePrice}
+                <span className="text-gray-500 text-xs sm:text-sm">/day</span>
+              </p>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Table Section */}
@@ -87,13 +94,13 @@ function Availabilty() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-4 py-2 border-b gap-2 sm:gap-0">
           <h3 className="font-semibold text-xl text-red-500">Room Rates</h3>
           <div className="flex flex-wrap gap-2">
-            <button className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+            {/* <button className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
               Add rate
             </button>
             <button className="border px-4 py-2 rounded-lg flex gap-2 items-center text-sm sm:text-base">
               <FaFilter />
               Filter
-            </button>
+            </button> */}
           </div>
         </div>
 
@@ -109,32 +116,24 @@ function Availabilty() {
             </tr>
           </thead>
           <tbody>
-            {roomTable.map((room) => (
-              <tr key={room.id} className="border-t border-gray-200">
-                <td className="py-3 px-4">{room.type}</td>
-                <td className="py-3 px-4">{room.offer}</td>
-                <td className="py-3 px-4">{room.policy}</td>
-                <td className="py-3 px-4 text-gray-600">{room.dealPrice}</td>
-                <td className="py-3 px-4 font-semibold">{room.rate}</td>
-                <td className="py-3 px-4">
-                  {room.status === "low" && (
-                    <span className="text-red-500 bg-red-100 px-3 py-1 rounded-lg text-xs sm:text-sm">
-                      {room.availability}
-                    </span>
-                  )}
-                  {room.status === "full" && (
-                    <span className="text-red-500 bg-red-100 px-3 py-1 rounded-lg text-xs sm:text-sm">
-                      Full
-                    </span>
-                  )}
-                  {room.status === "ok" && (
+            {roomTypes?.map((group) =>
+              group.rooms?.map((room) => (
+                <tr key={room._id} className="border-t border-gray-200">
+                  <td className="py-3 px-4">{group?.type}</td>
+                  <td className="py-3 px-4">Family Deal</td>
+                  <td className="py-3 px-4">
+                    {group?.hotel?.policies?.cancellationPolicy}
+                  </td>
+                  <td className="py-3 px-4 text-gray-600">{room?.basePrice}</td>
+                  <td className="py-3 px-4 font-semibold">{room?.basePrice}</td>
+                  <td className="py-3 px-4">
                     <span className="text-blue-500 bg-blue-100 px-3 py-1 rounded-lg text-xs sm:text-sm">
-                      {room.availability}
+                      {room?.totalRooms} rooms
                     </span>
-                  )}
-                </td>
-              </tr>
-            ))}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
