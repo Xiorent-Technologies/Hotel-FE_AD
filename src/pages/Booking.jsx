@@ -5,11 +5,21 @@ import { BsThreeDotsVertical } from "react-icons/bs";
 import { useBookingStore } from "../stores/useBookingStore";
 
 function Booking() {
-  const { getAllBookings, bookings } = useBookingStore();
+  const { getAllBookings, bookings ,updatePaymentStatus } = useBookingStore();
   const [roomId, setRoomId] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  const formatDate = (dateString) => {
+  if (!dateString) return "-";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-IN", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
 
   useEffect(() => {
     getAllBookings();
@@ -160,51 +170,90 @@ function Booking() {
               <th className="py-3 px-4">Actions</th>
             </tr>
           </thead>
-          <tbody>
-            {bookings.length > 0 ? (
-              bookings.map((b) => (
-                <tr key={b._id} className="border-b text-sm">
-                  <td className="py-2 px-4">{b?._id}</td>
-                  <td className="py-2 px-4">
-                    {b?.guestDetails?.firstName} {b?.guestDetails?.lastName}
-                  </td>
-                  <td className="py-2 px-4">{b?.guestDetails?.phone}</td>
-                  <td className="py-2 px-4">{b?.dates?.checkIn}</td>
-                  <td className="py-2 px-4">{b?.dates?.checkOut}</td>
-                  <td className="py-2 px-4 font-semibold">
-                    ₹{b?.pricing?.totalAmount}
-                  </td>
-                  <td className="py-2 px-4">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium ${
-                        b.paymentStatus === "pending"
-                          ? "bg-red-100 text-red-600"
-                          : b.paymentStatus === "paid"
-                          ? "bg-green-100 text-green-600"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {b.paymentStatus}
-                    </span>
-                  </td>
-                  <td className="py-2 px-4 flex gap-2">
-                    <FiCheckCircle className="text-green-600 cursor-pointer hover:scale-110" />
-                    <FiXCircle className="text-red-600 cursor-pointer hover:scale-110" />
-                    <BsThreeDotsVertical className="text-gray-500 cursor-pointer hover:scale-110" />
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  colSpan="8"
-                  className="text-center py-4 text-gray-500 italic"
-                >
-                  No bookings found
-                </td>
-              </tr>
-            )}
-          </tbody>
+<tbody>
+  {bookings.length > 0 ? (
+    bookings.map((b) => {
+      const disableApprove =
+        b.paymentStatus === "refunded" ||
+        b.status === "cancelled";
+
+      return (
+        <tr key={b._id} className="border-b text-sm">
+  <td className="py-2 px-4">{b?._id}</td>
+  <td className="py-2 px-4">
+    {b?.guestDetails?.firstName} {b?.guestDetails?.lastName}
+  </td>
+  <td className="py-2 px-4">{b?.guestDetails?.phone}</td>
+  <td className="py-2 px-4">{formatDate(b?.dates?.checkIn)}</td>
+  <td className="py-2 px-4">{formatDate(b?.dates?.checkOut)}</td>
+  <td className="py-2 px-4 font-semibold">
+    ₹{b?.pricing?.totalAmount}
+  </td>
+
+  {/* Status Column */}
+  <td className="py-2 px-4">
+    <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 items-start sm:items-center">
+      <span
+        className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium ${
+          b.paymentStatus === "pending"
+            ? "bg-red-100 text-red-600"
+            : b.paymentStatus === "paid"
+            ? "bg-green-100 text-green-600"
+            : "bg-gray-100 text-gray-600"
+        }`}
+      >
+        {b.paymentStatus}
+      </span>
+      <span
+        className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium ${
+          b.status === "pending"
+            ? "bg-yellow-100 text-yellow-700"
+            : b.status === "confirmed"
+            ? "bg-blue-100 text-blue-700"
+            : b.status === "cancelled"
+            ? "bg-gray-100 text-gray-600"
+            : b.status === "completed"
+            ? "bg-green-100 text-green-700"
+            : "bg-gray-100 text-gray-600"
+        }`}
+      >
+        {b.status}
+      </span>
+    </div>
+  </td>
+
+  {/* Actions Column */}
+  <td className="py-2 px-4 flex gap-2 items-center">
+    {!disableApprove && (
+      <FiCheckCircle
+        className="text-green-600 cursor-pointer hover:scale-110"
+        onClick={async () => {
+          const success = await updatePaymentStatus(b._id);
+          if (success) {
+            alert("Payment status updated to paid ✅");
+            getAllBookings();
+          }
+        }}
+      />
+    )}
+    <FiXCircle className="text-red-600 cursor-pointer hover:scale-110" />
+  </td>
+</tr>
+
+      );
+    })
+  ) : (
+    <tr>
+      <td
+        colSpan="8"
+        className="text-center py-4 text-gray-500 italic"
+      >
+        No bookings found
+      </td>
+    </tr>
+  )}
+</tbody>
+
         </table>
       </div>
     </div>

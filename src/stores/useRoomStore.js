@@ -6,12 +6,13 @@ export const useRoomStore = create((set,get) => ({
     roomTypes : [],
     HotelRooms : [],
     vendorHotels :[],
+    rooms :[],
     hotels : [],
     totalRooms : null,
     
     getRoomTypes : async() => {
     try {
-      const res = await axios.get("http://localhost:5000/api/room/get-roomtypes/68d292e08b19d2074beb4142");
+      const res = await axios.get("https://hotel-be-n0rh.onrender.com/api/room/get-roomtypes/68d292e08b19d2074beb4142");
       console.log(res.data.data);
 
       // Update the state
@@ -43,7 +44,7 @@ getHotelRooms: async (filters = {}) => {
       });
     }
 
-    const url = `http://localhost:5000/api/room/get-hotel-rooms/${hotelId}${params.toString() ? '?' + params.toString() : ''}`;
+    const url = `https://hotel-be-n0rh.onrender.com/api/room/get-hotel-rooms/${hotelId}${params.toString() ? '?' + params.toString() : ''}`;
     console.log("Fetching URL:", url);
 
     const res = await axios.get(url);
@@ -64,7 +65,7 @@ getHotelRooms: async (filters = {}) => {
 
     getVendorRooms : async() => {
     try {
-      const res = await axios.get("http://localhost:5000/api/room/total-vendor-rooms", {withCredentials: true})
+      const res = await axios.get("https://hotel-be-n0rh.onrender.com/api/room/total-vendor-rooms", {withCredentials: true})
       set({totalRooms : res.data});
       console.log(res.data);
     } catch (error) {
@@ -76,7 +77,7 @@ getHotelRooms: async (filters = {}) => {
 
   getVendorHotels : async(vendorId) => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/hotel/vendor-hotels/${vendorId}`);
+      const res = await axios.get(`https://hotel-be-n0rh.onrender.com/api/hotel/vendor-hotels/${vendorId}`);
       // set({vendorHotels :res.data});
       // console.log(res.data);
       return res.data;
@@ -90,7 +91,7 @@ getHotelRooms: async (filters = {}) => {
 
   getAllHotels : async() => {
     try {
-      const res = await axios.get("http://localhost:5000/api/hotel/get-hotels");
+      const res = await axios.get("https://hotel-be-n0rh.onrender.com/api/hotel/get-hotels");
       set({hotels : res.data});
       console.log(res.data);
     } catch (error) {
@@ -100,7 +101,7 @@ getHotelRooms: async (filters = {}) => {
 
   createNewHotel: async (data) => {
     try {
-      const res = await axios.post("http://localhost:5000/api/hotel/create-hotel", data);
+      const res = await axios.post("https://hotel-be-n0rh.onrender.com/api/hotel/create-hotel", data);
       set((state) => ({
         hotels: [...state.hotels, res.data.hotel],
       }));
@@ -109,4 +110,18 @@ getHotelRooms: async (filters = {}) => {
       console.error("Failed to create hotel", error);
     }
   },
+
+  createRooms: async(data) => {
+    try {
+      const res = await axios.post("https://hotel-be-n0rh.onrender.com/api/room/create-room", data);
+      set((state) => ({
+        rooms: [...state.rooms, res.data.room],
+      }));
+      console.log("room created:", res.data);
+    } catch (error) {
+      console.error("Failed to create room", error);
+    
+    }
+  }
+
 }))

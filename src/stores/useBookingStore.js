@@ -8,7 +8,7 @@ export const useBookingStore = create((set, get) => ({
 
   getAllBookings: async (roomId = "", paymentStatus = "") => {
     try {
-      let url = `http://localhost:5000/api/bookings/get-bookings/68d292e08b19d2074beb4142`;
+      let url = `https://hotel-be-n0rh.onrender.com/api/bookings/get-bookings/68d292e08b19d2074beb4142`;
       
       const params = new URLSearchParams();
       if (roomId) params.append("roomId", roomId);
@@ -30,7 +30,7 @@ export const useBookingStore = create((set, get) => ({
 
   getEarnings : async() => {
     try {
-      const res = await axios.get("http://localhost:5000/api/bookings/get-earnings", {withCredentials: true})
+      const res = await axios.get("https://hotel-be-n0rh.onrender.com/api/bookings/get-earnings", {withCredentials: true})
       set({earnings : res.data});
       console.log(res.data);
     } catch (error) {
@@ -41,13 +41,36 @@ export const useBookingStore = create((set, get) => ({
 
   getMonthly : async (hotelId) => {
     try{
-      const res = await axios.get(`http://localhost:5000/api/bookings/get-monthly-bookings/${hotelId}`);
+      const res = await axios.get(`https://hotel-be-n0rh.onrender.com/api/bookings/get-monthly-bookings/${hotelId}`);
       set({data : res.data})
       console.log(res.data);
     }
     catch(error){
       console.error("Failed to fetch bookings:", error);
     }
-  }
+  },
+
+  updatePaymentStatus: async (bookingId) => {
+    try {
+      const res = await axios.put(
+        `https://hotel-be-n0rh.onrender.com/api/bookings/status/${bookingId}`
+      );
+
+      const updatedBooking = res.data.data;
+      set((state) => ({
+        bookings: state.bookings.map((b) =>
+          b._id === updatedBooking._id ? updatedBooking : b
+        ),
+      }));
+
+      console.log("Payment updated:", updatedBooking);
+      return true;
+    } catch (error) {
+      console.error("Failed to update payment status:", error);
+      return false;
+    }
+  },
+
+
 
 }));

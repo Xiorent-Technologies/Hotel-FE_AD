@@ -13,7 +13,7 @@ export const useVacancyStore = create((set) => ({
     set({ loading: true, error: null });
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/vacancy/daily-visitors/${hotelId}`,
+        `https://hotel-be-n0rh.onrender.com/api/vacancy/daily-visitors/${hotelId}`,
         { date },{withCredentials : true}
       );
       
@@ -40,7 +40,7 @@ export const useVacancyStore = create((set) => ({
 
   fetchToday : async(date,hotelId) => {
     try {
-      const res = await axios.post(`http://localhost:5000/api/vacancy/get-daily-occupancy/${hotelId}`,{date})
+      const res = await axios.post(`https://hotel-be-n0rh.onrender.com/api/vacancy/get-daily-occupancy/${hotelId}`,{date})
       set({visitor : res.data});
       console.log(res.data);
     } catch (error) {

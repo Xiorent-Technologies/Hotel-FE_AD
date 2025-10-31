@@ -42,7 +42,7 @@ function Rooms() {
               </div>
               <div className="font-semibold text-sm sm:text-base">{group.type}</div>
               <p className="text-xs sm:text-sm text-gray-500">
-                2/{room.totalRooms} available
+                Total Rooms : {room.totalRooms}
               </p>
               <p className="text-red-600 font-bold text-lg sm:text-xl">
                 {room.basePrice}

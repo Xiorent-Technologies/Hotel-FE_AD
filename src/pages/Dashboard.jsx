@@ -24,12 +24,10 @@ const Dashboard = () => {
   const { selectedDate, setSelectedDate } = useGlobalStore(); // ✅ use Zustand state
   const [showDatePicker, setShowDatePicker] = useState(false);
   const {getMonthly,data} = useBookingStore();
-  const {fetchToday,visitor} = useVacancyStore()
+  const {fetchToday} = useVacancyStore()
   const {getVendorRooms,totalRooms} = useRoomStore();
 
- const occupied = Number(visitor?.occupiedRooms) || 0;
-const total = Number(totalRooms) || 0;
-const percentage = total > 0 ? (occupied / total) * 100 : 0;
+
 
   const HOTEL_ID = "68d292e08b19d2074beb4142"
 
@@ -123,18 +121,7 @@ const percentage = total > 0 ? (occupied / total) * 100 : 0;
           </div>
 
           {/* Today's Occupancy */}
-          <div className="bg-white rounded-lg shadow flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex flex-col items-center flex-1">
-              <h3 className="text-sm sm:text-base font-semibold text-gray-700 mb-2 sm:mb-4">
-                Today's Occupancy
-              </h3>
-              <TodayOccupancy percentage={percentage} />
-            </div>
-            <div className="flex flex-col items-center text-xs sm:text-sm text-gray-500 w-full sm:w-auto gap-1">
-              <span>Occupied Rooms</span>
-              <span>Ready to book</span>
-            </div>
-          </div>
+          
         </div>
       </div>
     </div>

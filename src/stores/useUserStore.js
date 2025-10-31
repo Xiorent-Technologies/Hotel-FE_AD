@@ -8,7 +8,7 @@ export const useUserStore = create((set,get) => ({
 
     loginUser : async({email,password}) => {
         try {
-            const res = await axios.post("http://localhost:5000/api/auth/login",{email,password},{withCredentials:true})
+            const res = await axios.post("https://hotel-be-n0rh.onrender.com/api/auth/login",{email,password},{withCredentials:true})
             console.log(res.data);
             set({user : res.data});
         } catch (error) {
@@ -18,7 +18,7 @@ export const useUserStore = create((set,get) => ({
 
     getUser : async() => {
         try {
-            const res = await axios.get("http://localhost:5000/api/auth/get-user", {withCredentials: true} );
+            const res = await axios.get("https://hotel-be-n0rh.onrender.com/api/auth/get-user", {withCredentials: true} );
             console.log(res.data);
             set({user : res.data});
 
@@ -31,7 +31,7 @@ export const useUserStore = create((set,get) => ({
     updateUser: async (id, updatedData) => {
   try {
     const res = await axios.put(
-      `http://localhost:5000/api/auth/update/${id}`,
+      `https://hotel-be-n0rh.onrender.com/api/auth/update/${id}`,
       updatedData,
       {
         headers: {
@@ -61,7 +61,7 @@ export const useUserStore = create((set,get) => ({
 
       getAllVendors : async() => {
         try {
-    const res = await axios.get("http://localhost:5000/api/auth/vendors");
+    const res = await axios.get("https://hotel-be-n0rh.onrender.com/api/auth/vendors");
     set({vendors : res.data});
     console.log(res.data);
     

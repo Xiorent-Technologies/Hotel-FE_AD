@@ -1,41 +1,18 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useRoomStore } from "../stores/useRoomStore";
 
 const roomTypes = [
-  "single",
-  "double",
-  "deluxe",
-  "family",
-  "Apartments",
-  "Guest Houses",
-  "Home Stays",
-  "Hostels",
-  "Boats",
-  "Bed and Breakfast",
-  "Holiday Homes",
-  "Villas",
-  "Cottages",
-  "Chalets",
-  "Farm Stays",
-  "Resorts",
-  "Timeshares",
-  "Luxury Suites",
+  "single", "double", "deluxe", "family", "Apartments", "Guest Houses",
+  "Home Stays", "Hostels", "Boats", "Bed and Breakfast", "Holiday Homes",
+  "Villas", "Cottages", "Chalets", "Farm Stays", "Resorts", "Timeshares", "Luxury Suites",
 ];
 
 const amenitiesOptions = [
-  "Free Wi-Fi",
-  "Swimming Pool",
-  "Air Conditioning",
-  "Ocean View Balcony",
-  "Gym",
-  "Hot Tub",
-  "Spa",
-  "Restaurant",
-  "Private Pool",
-  "Bar",
-  "All Inclusive meals",
-  "Parking",
+  "Free Wi-Fi", "Swimming Pool", "Air Conditioning", "Ocean View Balcony",
+  "Gym", "Hot Tub", "Spa", "Restaurant", "Private Pool", "Bar",
+  "All Inclusive meals", "Parking",
 ];
- 
+
 const AddRooms = () => {
   const [roomData, setRoomData] = useState({
     hotelId: "",
@@ -53,8 +30,17 @@ const AddRooms = () => {
     },
     isActive: true,
   });
-  const [images, setImages] = useState([{ file: null }]);
 
+  const [images, setImages] = useState([{ file: null }]);
+  const [loading, setLoading] = useState(false);
+
+  const { getAllHotels, hotels, createRooms } = useRoomStore();
+
+  useEffect(() => {
+    getAllHotels();
+  }, []);
+
+  // Toggle amenity selection
   const handleAmenityChange = (amenity) => {
     setRoomData((prev) => ({
       ...prev,
@@ -64,13 +50,7 @@ const AddRooms = () => {
     }));
   };
 
-  const handleImageChange = async (index, file) => {
-    const base64 = await convertToBase64(file);
-    const newImages = [...images];
-    newImages[index].file = base64;
-    setImages(newImages);
-  };
-
+  // Convert image file to base64
   const convertToBase64 = (file) =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -79,12 +59,60 @@ const AddRooms = () => {
       reader.onerror = (err) => reject(err);
     });
 
+  // Handle file input change
+  const handleImageChange = async (index, file) => {
+    const base64 = await convertToBase64(file);
+    const newImages = [...images];
+    newImages[index].file = base64;
+    setImages(newImages);
+  };
+
+  // Add more image fields
   const addMoreImage = () => setImages([...images, { file: null }]);
 
-  const handleSubmit = (e) => {
+  // Submit form data
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("New Room Data:", { ...roomData, images });
-    alert("✅ Room created successfully (dummy test)!");
+
+    if (!roomData.hotelId || !roomData.type || !roomData.basePrice) {
+      alert("⚠️ Please fill all required fields!");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload = {
+        ...roomData,
+        images: images.map((img) => img.file).filter(Boolean),
+      };
+
+      await createRooms(payload);
+      alert("✅ Room created successfully!");
+
+      // Reset form
+      setRoomData({
+        hotelId: "",
+        type: "",
+        description: "",
+        capacity: { adults: 1, children: 0, total: 1 },
+        basePrice: "",
+        taxRate: 0,
+        totalRooms: 1,
+        amenities: [],
+        cancellationRules: {
+          freeCancellationHours: 24,
+          cancellationFee: 0,
+          nonRefundable: false,
+        },
+        isActive: true,
+      });
+      setImages([{ file: null }]);
+    } catch (error) {
+      console.error("❌ Room creation failed:", error);
+      alert("Failed to create room. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -98,27 +126,25 @@ const AddRooms = () => {
 
       {/* Hotel Selection */}
       <div className="mb-6">
-        <label className="block text-gray-700 font-medium mb-2">
-          Select Hotel
-        </label>
+        <label className="block text-gray-700 font-medium mb-2">Select Hotel</label>
         <select
           value={roomData.hotelId}
-          onChange={(e) =>
-            setRoomData({ ...roomData, hotelId: e.target.value })
-          }
+          onChange={(e) => setRoomData({ ...roomData, hotelId: e.target.value })}
           className="w-full border-2 border-gray-300 rounded-lg p-3 focus:border-red-500 focus:ring-1 focus:ring-red-500"
         >
           <option value="">-- Choose Hotel --</option>
-          <option value="hotel1">The Oberoi, Mumbai</option>
-          <option value="hotel2">Taj Palace, Delhi</option>
-          <option value="hotel3">ITC Gardenia, Bengaluru</option>
+          {hotels.map((hotel) => (
+            <option key={hotel._id} value={hotel._id}>
+              {hotel.name}
+            </option>
+          ))}
         </select>
       </div>
 
       {/* Room Type & Description */}
       <div className="grid md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-gray-700 font-medium mb-2">Type</label>
+          <label className="block text-gray-700 font-medium mb-2">Room Type</label>
           <select
             value={roomData.type}
             onChange={(e) => setRoomData({ ...roomData, type: e.target.value })}
@@ -134,15 +160,11 @@ const AddRooms = () => {
         </div>
 
         <div>
-          <label className="block text-gray-700 font-medium mb-2">
-            Description
-          </label>
+          <label className="block text-gray-700 font-medium mb-2">Description</label>
           <textarea
             placeholder="Room Description"
             value={roomData.description}
-            onChange={(e) =>
-              setRoomData({ ...roomData, description: e.target.value })
-            }
+            onChange={(e) => setRoomData({ ...roomData, description: e.target.value })}
             rows={3}
             className="w-full border-2 border-gray-300 rounded-lg p-3 focus:border-red-500 focus:ring-1 focus:ring-red-500"
           />
@@ -150,15 +172,11 @@ const AddRooms = () => {
       </div>
 
       {/* Capacity */}
-      <h3 className="text-xl font-semibold mt-10 mb-4 text-gray-800">
-        Capacity
-      </h3>
+      <h3 className="text-xl font-semibold mt-10 mb-4 text-gray-800">Capacity</h3>
       <div className="grid md:grid-cols-3 gap-6">
         {["adults", "children", "total"].map((key) => (
           <div key={key}>
-            <label className="block text-gray-700 font-medium mb-2 capitalize">
-              {key}
-            </label>
+            <label className="block text-gray-700 font-medium mb-2 capitalize">{key}</label>
             <input
               type="number"
               min="0"
@@ -166,10 +184,7 @@ const AddRooms = () => {
               onChange={(e) =>
                 setRoomData({
                   ...roomData,
-                  capacity: {
-                    ...roomData.capacity,
-                    [key]: parseInt(e.target.value),
-                  },
+                  capacity: { ...roomData.capacity, [key]: parseInt(e.target.value) },
                 })
               }
               className="w-full border-2 border-gray-300 rounded-lg p-3 focus:border-red-500 focus:ring-1 focus:ring-red-500"
@@ -179,43 +194,33 @@ const AddRooms = () => {
       </div>
 
       {/* Pricing */}
-      <h3 className="text-xl font-semibold mt-10 mb-4 text-gray-800">
-        Pricing Details
-      </h3>
+      <h3 className="text-xl font-semibold mt-10 mb-4 text-gray-800">Pricing Details</h3>
       <div className="grid md:grid-cols-3 gap-6">
         <input
           type="number"
           placeholder="Base Price"
           value={roomData.basePrice}
-          onChange={(e) =>
-            setRoomData({ ...roomData, basePrice: parseFloat(e.target.value) })
-          }
+          onChange={(e) => setRoomData({ ...roomData, basePrice: parseFloat(e.target.value) })}
           className="border-2 border-gray-300 rounded-lg p-3 w-full focus:border-red-500 focus:ring-1 focus:ring-red-500"
         />
         <input
           type="number"
           placeholder="Tax Rate (%)"
           value={roomData.taxRate}
-          onChange={(e) =>
-            setRoomData({ ...roomData, taxRate: parseFloat(e.target.value) })
-          }
+          onChange={(e) => setRoomData({ ...roomData, taxRate: parseFloat(e.target.value) })}
           className="border-2 border-gray-300 rounded-lg p-3 w-full focus:border-red-500 focus:ring-1 focus:ring-red-500"
         />
         <input
           type="number"
           placeholder="Total Rooms"
           value={roomData.totalRooms}
-          onChange={(e) =>
-            setRoomData({ ...roomData, totalRooms: parseInt(e.target.value) })
-          }
+          onChange={(e) => setRoomData({ ...roomData, totalRooms: parseInt(e.target.value) })}
           className="border-2 border-gray-300 rounded-lg p-3 w-full focus:border-red-500 focus:ring-1 focus:ring-red-500"
         />
       </div>
 
       {/* Amenities */}
-      <h3 className="text-xl font-semibold mt-10 mb-4 text-gray-800">
-        Amenities
-      </h3>
+      <h3 className="text-xl font-semibold mt-10 mb-4 text-gray-800">Amenities</h3>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {amenitiesOptions.map((amenity) => (
           <label key={amenity} className="flex items-center gap-2 text-gray-700">
@@ -230,10 +235,8 @@ const AddRooms = () => {
         ))}
       </div>
 
-      {/* Cancellation Rules */}
-      <h3 className="text-xl font-semibold mt-10 mb-4 text-gray-800">
-        Cancellation Policy
-      </h3>
+      {/* Cancellation Policy */}
+      <h3 className="text-xl font-semibold mt-10 mb-4 text-gray-800">Cancellation Policy</h3>
       <div className="grid md:grid-cols-3 gap-6">
         <input
           type="number"
@@ -287,12 +290,20 @@ const AddRooms = () => {
       {/* Images */}
       <h3 className="text-xl font-semibold mt-10 mb-4 text-gray-800">Images</h3>
       {images.map((img, idx) => (
-        <input
-          key={idx}
-          type="file"
-          onChange={(e) => handleImageChange(idx, e.target.files[0])}
-          className="border-2 border-gray-300 rounded-lg p-2 w-full mb-3 focus:border-red-500 focus:ring-1 focus:ring-red-500"
-        />
+        <div key={idx} className="mb-3">
+          <input
+            type="file"
+            onChange={(e) => handleImageChange(idx, e.target.files[0])}
+            className="border-2 border-gray-300 rounded-lg p-2 w-full focus:border-red-500 focus:ring-1 focus:ring-red-500"
+          />
+          {img.file && (
+            <img
+              src={img.file}
+              alt="preview"
+              className="mt-2 w-32 h-32 object-cover rounded-lg border"
+            />
+          )}
+        </div>
       ))}
       <button
         type="button"
@@ -307,21 +318,22 @@ const AddRooms = () => {
         <input
           type="checkbox"
           checked={roomData.isActive}
-          onChange={(e) =>
-            setRoomData({ ...roomData, isActive: e.target.checked })
-          }
+          onChange={(e) => setRoomData({ ...roomData, isActive: e.target.checked })}
           className="h-5 w-5 text-red-500 border-gray-300 rounded"
         />
         <span className="text-gray-700">Active Room</span>
       </div>
 
-      {/* Submit */}
+      {/* Submit Button */}
       <div className="text-center mt-10">
         <button
           type="submit"
-          className="bg-red-500 text-white px-8 py-3 rounded-xl font-semibold hover:bg-red-600 transition"
+          disabled={loading}
+          className={`${
+            loading ? "bg-gray-400" : "bg-red-500 hover:bg-red-600"
+          } text-white px-8 py-3 rounded-xl font-semibold transition`}
         >
-          Add Room
+          {loading ? "Creating Room..." : "Add Room"}
         </button>
       </div>
     </form>

@@ -1,32 +1,62 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { FaLocationDot, FaPhone, FaEnvelope, FaGlobe } from "react-icons/fa6";
 import { useRoomStore } from "../stores/useRoomStore";
+import { useUserStore } from "../stores/useUserStore";
 
 function AdminHotels() {
   const { getAllHotels, hotels } = useRoomStore();
+  const { getAllVendors, vendors } = useUserStore();
+
+  const [selectedVendor, setSelectedVendor] = useState(""); // vendor _id
 
   useEffect(() => {
     getAllHotels();
+    getAllVendors(); // ✅ fix: call function instead of referencing
   }, []);
+
+  // ✅ Filter hotels by selected vendor
+  const filteredHotels = selectedVendor
+    ? hotels.filter((hotel) => hotel.vendorId === selectedVendor)
+    : hotels;
 
   return (
     <div className="min-h-screen flex justify-center items-start bg-gray-50 py-10">
       <div className="w-full max-w-6xl px-4">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">
-          🏨 All Hotels
-        </h2>
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4 sm:mb-0">
+            🏨 All Hotels
+          </h2>
 
+          {/* Vendor Filter Dropdown */}
+          <div className="w-full sm:w-64">
+            <select
+              value={selectedVendor}
+              onChange={(e) => setSelectedVendor(e.target.value)}
+              className="w-full border-2 border-gray-300 rounded-lg p-2 focus:border-red-500 focus:ring-1 focus:ring-red-500"
+            >
+              <option value="">-- Filter by Vendor --</option>
+              {vendors?.map((vendor) => (
+                <option key={vendor?._id} value={vendor?._id}>
+                  {vendor?.name || vendor?.email}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Hotels List */}
         {!hotels ? (
           <div className="text-center py-12 text-gray-600">
             Loading hotels...
           </div>
-        ) : hotels.length === 0 ? (
+        ) : filteredHotels.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
-            No hotels found. Try adding one!
+            No hotels found for this vendor.
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6">
-            {hotels.map((hotel) => (
+            {filteredHotels.map((hotel) => (
               <div
                 key={hotel._id}
                 className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden"
